@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CreateClub Codenames</title>
+  <style>
+    :root {
+      --bg: #efe4d2;
+      --panel: #fffaf1;
+      --ink: #1e1d1b;
+      --muted: #6a6157;
+      --line: #d9c8ae;
+      --red: #c94d43;
+      --blue: #4172c8;
+      --neutral: #d8cab3;
+      --assassin: #252525;
+      --accent: #2e6f61;
+      --warn: #8a6325;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top, rgba(255, 249, 236, 0.85), transparent 35%),
+        linear-gradient(180deg, #f7efe3 0%, var(--bg) 100%);
+      padding: 20px;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      background: color-mix(in srgb, var(--panel) 94%, white);
+      border: 2px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 20px 50px rgba(42, 30, 10, 0.09);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 22px 24px 18px;
+      border-bottom: 2px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(201, 77, 67, 0.09), transparent 35%),
+        linear-gradient(225deg, rgba(65, 114, 200, 0.1), transparent 40%),
+        #fff8ee;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 3vw, 2.4rem);
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      max-width: 680px;
+      line-height: 1.45;
+      font-size: 0.98rem;
+    }
+
+    .status-strip {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    .pill.red {
+      color: white;
+      border-color: transparent;
+      background: var(--red);
+    }
+
+    .pill.blue {
+      color: white;
+      border-color: transparent;
+      background: var(--blue);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 0;
+    }
+
+    .board-area {
+      padding: 22px;
+      border-right: 2px solid var(--line);
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .secondary {
+      background: #7b6b57;
+      color: white;
+    }
+
+    .turn {
+      background: var(--warn);
+      color: white;
+    }
+
+    .ghost {
+      background: #e9decb;
+      color: #42392f;
+    }
+
+    .grid {
+      --card-font-size: 1rem;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      min-height: 88px;
+      border-radius: 16px;
+      border: 2px solid #d2c1a7;
+      background: #fffdfa;
+      color: #241f1a;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      font-size: var(--card-font-size);
+      line-height: 1.05;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+
+    .card.clickable {
+      cursor: pointer;
+    }
+
+    .card.clickable:hover {
+      background: #fff7eb;
+    }
+
+    .card.revealed {
+      color: white;
+      border-color: transparent;
+    }
+
+    .card.revealed.red {
+      background: var(--red);
+    }
+
+    .card.revealed.blue {
+      background: var(--blue);
+    }
+
+    .card.revealed.neutral {
+      background: var(--neutral);
+      color: #3a2d1f;
+    }
+
+    .card.revealed.assassin {
+      background: var(--assassin);
+    }
+
+    .grid.spymaster .card:not(.revealed).red {
+      background: #f4d1cd;
+    }
+
+    .grid.spymaster .card:not(.revealed).blue {
+      background: #dbe6fa;
+    }
+
+    .grid.spymaster .card:not(.revealed).neutral {
+      background: #efe5d5;
+    }
+
+    .grid.spymaster .card:not(.revealed).assassin {
+      background: #615c57;
+      color: white;
+    }
+
+    .notice {
+      min-height: 24px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .sidebar {
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      background: #fffdf8;
+    }
+
+    .panel {
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fffaf3;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel h2 {
+      font-size: 1.05rem;
+    }
+
+    .panel p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #463f38;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #ccbda7;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: white;
+    }
+
+    .room-code {
+      font-size: 1.5rem;
+      letter-spacing: 0.14em;
+      font-weight: 700;
+    }
+
+    .counts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .count-box {
+      border-radius: 14px;
+      padding: 12px;
+      color: white;
+    }
+
+    .count-box.red {
+      background: var(--red);
+    }
+
+    .count-box.blue {
+      background: var(--blue);
+    }
+
+    .count-box .label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.9;
+    }
+
+    .count-box .value {
+      margin-top: 4px;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    #chatLog {
+      min-height: 220px;
+      max-height: 320px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+      border: 1px solid #dbcdb9;
+      border-radius: 12px;
+      background: white;
+      padding: 10px;
+    }
+
+    .message {
+      line-height: 1.35;
+      font-size: 0.9rem;
+      word-break: break-word;
+    }
+
+    .message .meta {
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    #chatForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+
+    .tiny {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .board-area {
+        border-right: 0;
+        border-bottom: 2px solid var(--line);
+      }
+    }
+
+    @media (max-width: 680px) {
+      .row,
+      #chatForm {
+        grid-template-columns: 1fr;
+      }
+
+      .grid {
+        grid-template-columns: repeat(5, minmax(54px, 1fr));
+      }
+
+      .card {
+        min-height: 72px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>CreateClub Codenames</h1>
+          <p class="subtitle">Create a room, share a code, and play on the same live board. Words are loaded from Supabase, and the page is ready to deploy as a static Vercel app with one serverless API.</p>
+        </div>
+        <div class="pill" id="connectionPill">Not connected</div>
+      </div>
+      <div class="status-strip">
+        <div class="pill" id="turnPill">Turn: -</div>
+        <div class="pill" id="roomPill">Room: -</div>
+        <div class="pill" id="statusPill">Waiting for a room</div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="board-area">
+        <div class="toolbar">
+          <button id="newGameBtn" class="secondary" disabled>New Grid</button>
+          <button id="nextTurnBtn" class="turn" disabled>Next Turn</button>
+          <button id="spymasterBtn" class="ghost">Spymaster: Off</button>
+          <button id="refreshBtn" class="ghost" disabled>Refresh</button>
+        </div>
+        <div id="notice" class="notice">Create or join a room to begin.</div>
+        <section id="grid" class="grid"></section>
+      </section>
+
+      <aside class="sidebar">
+        <section class="panel">
+          <h2>Room Setup</h2>
+          <div class="stack">
+            <label for="playerNameInput">Your Name
+              <input id="playerNameInput" type="text" maxlength="30" placeholder="Alex" />
+            </label>
+            <div class="row">
+              <label for="gridSizeInput">Grid Size
+                <input id="gridSizeInput" type="number" min="4" max="6" value="5" />
+              </label>
+              <label for="assassinCountInput">Assassins
+                <input id="assassinCountInput" type="number" min="1" max="2" value="1" />
+              </label>
+            </div>
+            <div class="row">
+              <label for="blueCountInput">Blue Cards
+                <input id="blueCountInput" type="number" min="1" value="9" />
+              </label>
+              <label for="redCountInput">Red Cards
+                <input id="redCountInput" type="number" min="1" value="8" />
+              </label>
+            </div>
+            <button id="createRoomBtn" class="primary">Create Room</button>
+          </div>
+          <p class="tiny">Neutral cards are calculated automatically from the grid size.</p>
+        </section>
+
+        <section class="panel">
+          <h2>Join Existing Room</h2>
+          <div class="stack">
+            <label for="joinRoomInput">Room Code
+              <input id="joinRoomInput" type="text" maxlength="8" placeholder="AB12CD" />
+            </label>
+            <button id="joinRoomBtn" class="secondary">Join Room</button>
+            <div>
+              <div class="tiny">Current room</div>
+              <div class="room-code" id="roomCodeDisplay">-</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Board State</h2>
+          <div class="counts">
+            <div class="count-box red">
+              <div class="label">Red Remaining</div>
+              <div class="value" id="redRemainingValue">0</div>
+            </div>
+            <div class="count-box blue">
+              <div class="label">Blue Remaining</div>
+              <div class="value" id="blueRemainingValue">0</div>
+            </div>
+          </div>
+          <p id="winnerText">No winner yet.</p>
+        </section>
+
+        <section class="panel">
+          <h2>Chat</h2>
+          <div id="chatLog"></div>
+          <form id="chatForm">
+            <input id="chatInput" type="text" maxlength="240" placeholder="Type a message..." />
+            <button id="chatSendBtn" class="primary" type="submit" disabled>Send</button>
+          </form>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script type="module">
+    const POLL_INTERVAL_MS = 2500;
+
+    const connectionPill = document.getElementById("connectionPill");
+    const turnPill = document.getElementById("turnPill");
+    const roomPill = document.getElementById("roomPill");
+    const statusPill = document.getElementById("statusPill");
+    const noticeEl = document.getElementById("notice");
+    const gridEl = document.getElementById("grid");
+    const newGameBtn = document.getElementById("newGameBtn");
+    const nextTurnBtn = document.getElementById("nextTurnBtn");
+    const spymasterBtn = document.getElementById("spymasterBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const createRoomBtn = document.getElementById("createRoomBtn");
+    const joinRoomBtn = document.getElementById("joinRoomBtn");
+    const playerNameInput = document.getElementById("playerNameInput");
+    const gridSizeInput = document.getElementById("gridSizeInput");
+    const assassinCountInput = document.getElementById("assassinCountInput");
+    const blueCountInput = document.getElementById("blueCountInput");
+    const redCountInput = document.getElementById("redCountInput");
+    const joinRoomInput = document.getElementById("joinRoomInput");
+    const roomCodeDisplay = document.getElementById("roomCodeDisplay");
+    const redRemainingValue = document.getElementById("redRemainingValue");
+    const blueRemainingValue = document.getElementById("blueRemainingValue");
+    const winnerText = document.getElementById("winnerText");
+    const chatLogEl = document.getElementById("chatLog");
+    const chatForm = document.getElementById("chatForm");
+    const chatInput = document.getElementById("chatInput");
+    const chatSendBtn = document.getElementById("chatSendBtn");
+
+    let activeRoomCode = localStorage.getItem("codenames_room_code") || "";
+    let activePlayerName = localStorage.getItem("codenames_player_name") || "";
+    let spymasterMode = false;
+    let latestGame = null;
+    let pollTimer = null;
+    let loading = false;
+
+    playerNameInput.value = activePlayerName;
+    joinRoomInput.value = activeRoomCode;
+
+    function setNotice(message) {
+      noticeEl.textContent = message;
+    }
+
+    function setConnectionState(label, tone = "") {
+      connectionPill.textContent = label;
+      connectionPill.className = `pill${tone ? ` ${tone}` : ""}`;
+    }
+
+    function getPlayerName() {
+      const name = playerNameInput.value.trim();
+      if (!name) {
+        setNotice("Add your name first.");
+        playerNameInput.focus();
+        return "";
+      }
+
+      activePlayerName = name;
+      localStorage.setItem("codenames_player_name", name);
+      return name;
+    }
+
+    function getRequestedSettings() {
+      const settings = {
+        gridSize: Number.parseInt(gridSizeInput.value, 10),
+        blueCount: Number.parseInt(blueCountInput.value, 10),
+        redCount: Number.parseInt(redCountInput.value, 10),
+        assassinCount: Number.parseInt(assassinCountInput.value, 10)
+      };
+
+      if (Object.values(settings).some((value) => Number.isNaN(value))) {
+        throw new Error("All settings must be valid numbers.");
+      }
+
+      const totalCells = settings.gridSize * settings.gridSize;
+      const roleTotal = settings.blueCount + settings.redCount + settings.assassinCount;
+
+      if (settings.gridSize < 4 || settings.gridSize > 6) {
+        throw new Error("Grid size must be between 4 and 6.");
+      }
+
+      if (settings.blueCount < 1 || settings.redCount < 1 || settings.assassinCount < 1) {
+        throw new Error("Blue, red, and assassin counts must all be at least 1.");
+      }
+
+      if (roleTotal >= totalCells) {
+        throw new Error("You need at least one neutral card on the board.");
+      }
+
+      return settings;
+    }
+
+    function setLoading(nextLoading) {
+      loading = nextLoading;
+      createRoomBtn.disabled = nextLoading;
+      joinRoomBtn.disabled = nextLoading;
+      newGameBtn.disabled = nextLoading || !activeRoomCode;
+      nextTurnBtn.disabled = nextLoading || !activeRoomCode;
+      refreshBtn.disabled = nextLoading || !activeRoomCode;
+      chatSendBtn.disabled = nextLoading || !activeRoomCode;
+    }
+
+    async function apiRequest(method, body = null, roomCode = "") {
+      const url = roomCode ? `/api/game?roomCode=${encodeURIComponent(roomCode)}` : "/api/game";
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: body ? JSON.stringify(body) : null
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || `Request failed with ${response.status}`);
+      }
+
+      return payload;
+    }
+
+    function fitCardText(card) {
+      const minPx = 11;
+      let sizePx = 20;
+      card.style.fontSize = `${sizePx}px`;
+
+      while ((card.scrollHeight > card.clientHeight - 8 || card.scrollWidth > card.clientWidth - 8) && sizePx > minPx) {
+        sizePx -= 0.5;
+        card.style.fontSize = `${sizePx}px`;
+      }
+    }
+
+    function appendMessage(message) {
+      const row = document.createElement("div");
+      row.className = "message";
+      const meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = `${message.player_name}:`;
+      const text = document.createElement("span");
+      text.textContent = message.message;
+      row.append(meta, text);
+      chatLogEl.appendChild(row);
+    }
+
+    function renderChat(messages) {
+      chatLogEl.innerHTML = "";
+      messages.forEach(appendMessage);
+      chatLogEl.scrollTop = chatLogEl.scrollHeight;
+    }
+
+    function renderBoard(game) {
+      latestGame = game;
+      gridEl.innerHTML = "";
+      gridEl.classList.toggle("spymaster", spymasterMode);
+
+      const size = game.grid_size || 5;
+      gridEl.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+      const fontSize = size >= 6 ? "0.84rem" : size === 5 ? "0.97rem" : "1.08rem";
+      gridEl.style.setProperty("--card-font-size", fontSize);
+
+      game.cards.forEach((card) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "card";
+        button.textContent = card.word;
+        button.dataset.id = card.id;
+        button.dataset.role = card.role;
+
+        if (card.revealed) {
+          button.classList.add("revealed", card.role);
+        } else if (spymasterMode) {
+          button.classList.add(card.role);
+        }
+
+        if (!card.revealed && game.status === "active") {
+          button.classList.add("clickable");
+          button.addEventListener("click", () => revealCard(card.id));
+        }
+
+        gridEl.appendChild(button);
+        requestAnimationFrame(() => fitCardText(button));
+      });
+
+      turnPill.textContent = `Turn: ${game.current_team.toUpperCase()}`;
+      turnPill.className = `pill ${game.current_team}`;
+      roomPill.textContent = `Room: ${game.room_code}`;
+      roomCodeDisplay.textContent = game.room_code;
+      statusPill.textContent = game.status === "finished" ? "Game finished" : "Live board";
+      redRemainingValue.textContent = String(game.red_remaining);
+      blueRemainingValue.textContent = String(game.blue_remaining);
+      winnerText.textContent = game.winner
+        ? `${game.winner.toUpperCase()} team wins.`
+        : "No winner yet.";
+
+      const summary = game.status === "finished"
+        ? game.winner
+          ? `${game.winner.toUpperCase()} won this round.`
+          : "This round is over."
+        : `Reveal cards live with room ${game.room_code}.`;
+      setNotice(summary);
+    }
+
+    function updateRoomState(game, messages) {
+      activeRoomCode = game.room_code;
+      localStorage.setItem("codenames_room_code", activeRoomCode);
+      joinRoomInput.value = activeRoomCode;
+      renderBoard(game);
+      renderChat(messages);
+      setConnectionState("Connected");
+      setLoading(false);
+    }
+
+    async function refreshRoom(showErrors = false) {
+      if (!activeRoomCode) return;
+
+      try {
+        const payload = await apiRequest("GET", null, activeRoomCode);
+        updateRoomState(payload.game, payload.messages);
+        return payload;
+      } catch (error) {
+        setConnectionState("Disconnected");
+        if (showErrors) {
+          setNotice(error.message);
+        }
+        throw error;
+      }
+    }
+
+    function startPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(() => {
+        refreshRoom(false);
+      }, POLL_INTERVAL_MS);
+    }
+
+    async function createRoom() {
+      try {
+        const playerName = getPlayerName();
+        if (!playerName) return;
+        const settings = getRequestedSettings();
+        setLoading(true);
+        setNotice("Creating room...");
+        const payload = await apiRequest("POST", {
+          action: "create",
+          playerName,
+          settings
+        });
+        updateRoomState(payload.game, payload.messages);
+        startPolling();
+      } catch (error) {
+        setNotice(error.message);
+        setConnectionState("Error");
+        setLoading(false);
+      }
+    }
+
+    async function joinRoom() {
+      const playerName = getPlayerName();
+      if (!playerName) return;
+
+      const roomCode = joinRoomInput.value.trim().toUpperCase();
+      if (!roomCode) {
+        setNotice("Enter a room code to join.");
+        return;
+      }
+
+      activeRoomCode = roomCode;
+      localStorage.setItem("codenames_room_code", activeRoomCode);
+      setLoading(true);
+      setNotice(`Joining room ${roomCode}...`);
+
+      try {
+        await apiRequest("POST", {
+          action: "chat",
+          roomCode,
+          playerName,
+          message: `${playerName} joined the room.`
+        });
+        await refreshRoom(true);
+        startPolling();
+      } catch (error) {
+        setNotice(error.message);
+        setConnectionState("Error");
+        setLoading(false);
+      }
+    }
+
+    async function sendAction(action, extra = {}) {
+      if (!activeRoomCode) {
+        setNotice("Create or join a room first.");
+        return null;
+      }
+
+      const playerName = getPlayerName();
+      if (!playerName) return null;
+
+      setLoading(true);
+      try {
+        const payload = await apiRequest("POST", {
+          action,
+          roomCode: activeRoomCode,
+          playerName,
+          ...extra
+        });
+        updateRoomState(payload.game, payload.messages);
+        return payload;
+      } catch (error) {
+        setNotice(error.message);
+        setConnectionState("Error");
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function revealCard(cardId) {
+      if (spymasterMode) {
+        setNotice("Turn off Spymaster mode to reveal cards.");
+        return;
+      }
+
+      await sendAction("reveal", { cardId });
+    }
+
+    createRoomBtn.addEventListener("click", createRoom);
+    joinRoomBtn.addEventListener("click", joinRoom);
+    newGameBtn.addEventListener("click", async () => {
+      try {
+        const settings = getRequestedSettings();
+        await sendAction("reset", { settings });
+      } catch (error) {
+        setNotice(error.message);
+      }
+    });
+    nextTurnBtn.addEventListener("click", () => sendAction("nextTurn"));
+    refreshBtn.addEventListener("click", () => refreshRoom(true));
+    spymasterBtn.addEventListener("click", () => {
+      spymasterMode = !spymasterMode;
+      spymasterBtn.textContent = `Spymaster: ${spymasterMode ? "On" : "Off"}`;
+      if (latestGame) renderBoard(latestGame);
+    });
+
+    chatForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = chatInput.value.trim();
+      if (!message) return;
+      const payload = await sendAction("chat", { message });
+      if (payload) {
+        chatInput.value = "";
+        chatInput.focus();
+      }
+    });
+
+    if (activeRoomCode) {
+      setLoading(true);
+      refreshRoom(true)
+        .then(() => startPolling())
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    } else {
+      setConnectionState("Not connected");
+    }
+  </script>
+</body>
+</html>
