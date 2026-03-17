@@ -2,15 +2,6 @@ import { createClient } from "@supabase/supabase-js";
 
 const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-function json(status, body) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json"
-    }
-  });
-}
-
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -360,47 +351,46 @@ async function addChatMessage(supabase, roomCode, playerName, message) {
   return getRoomPayload(supabase, roomCode);
 }
 
-export default async function handler(request) {
+export default async function handler(req, res) {
   try {
     const supabase = getSupabase();
 
-    if (request.method === "GET") {
-      const { searchParams } = new URL(request.url);
-      const roomCode = searchParams.get("roomCode");
+    if (req.method === "GET") {
+      const roomCode = req.query.roomCode;
       const payload = await getRoomPayload(supabase, roomCode);
-      return json(200, payload);
+      return res.status(200).json(payload);
     }
 
-    if (request.method !== "POST") {
-      return json(405, { error: "Method not allowed." });
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed." });
     }
 
-    const body = await request.json();
+    const body = req.body || {};
     const { action, roomCode, playerName, settings, cardId, message } = body;
 
     if (action === "create") {
-      return json(200, await createRoom(supabase, playerName, settings));
+      return res.status(200).json(await createRoom(supabase, playerName, settings));
     }
 
     if (action === "reset") {
-      return json(200, await resetRoom(supabase, roomCode, playerName, settings));
+      return res.status(200).json(await resetRoom(supabase, roomCode, playerName, settings));
     }
 
     if (action === "reveal") {
-      return json(200, await revealCard(supabase, roomCode, playerName, cardId));
+      return res.status(200).json(await revealCard(supabase, roomCode, playerName, cardId));
     }
 
     if (action === "nextTurn") {
-      return json(200, await advanceTurn(supabase, roomCode, playerName));
+      return res.status(200).json(await advanceTurn(supabase, roomCode, playerName));
     }
 
     if (action === "chat") {
-      return json(200, await addChatMessage(supabase, roomCode, playerName, message));
+      return res.status(200).json(await addChatMessage(supabase, roomCode, playerName, message));
     }
 
-    return json(400, { error: "Unknown action." });
+    return res.status(400).json({ error: "Unknown action." });
   } catch (error) {
-    return json(400, {
+    return res.status(400).json({
       error: error.message || "Unexpected server error."
     });
   }
